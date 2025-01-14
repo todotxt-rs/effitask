@@ -11,10 +11,10 @@ endif
 
 all: build
 
-build: gtk+-4.0
+build: gtk4
 	$(CARGO) build $(CARGO_FLAGS)
 
-gtk+-4.0:
+gtk4:
 	@if ! pkg-config $@; then \
 		printf '%s not installed\n' "$@" >&2; \
 		exit 1; \
