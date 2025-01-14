@@ -110,6 +110,8 @@ impl relm4::Component for Model {
                 self.count += 1;
             }
             Msg::Clear => {
+                use relm4::RelmRemoveAllExt as _;
+
                 widgets.list_box.remove_all();
                 self.count = 0;
             }

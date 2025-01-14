@@ -46,6 +46,8 @@ impl Model {
     }
 
     fn clear(&mut self, widgets: &ModelWidgets) {
+        use relm4::RelmRemoveAllExt as _;
+
         widgets.list_box.remove_all();
         self.children = Vec::new();
     }

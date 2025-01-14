@@ -7,7 +7,6 @@ edition = "2021"
 rust-version = "1.80"
 
 [dependencies]
-envir = "1.0"
 human-panic = "2.0"
 notify = "8.0"
 pulldown-cmark = "0.12"
@@ -20,10 +19,14 @@ relm4-components = "0.9"
 version = "0.4"
 default-features = false
 
+[dependencies.envir]
+version = "1.0"
+default-features = false
+features = ["dotenv"]
+
 [dependencies.gtk]
 package = "gtk4"
 version = "0.9"
-features = ["v4_12"]
 
 [dependencies.log]
 version = "0.4"
