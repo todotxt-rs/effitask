@@ -184,6 +184,7 @@ impl relm4::Component for Model {
 
     view! {
         gtk::ScrolledWindow {
+            add_css_class: "edit",
             set_visible: false,
             set_width_request: 172,
 

@@ -249,6 +249,9 @@ impl relm4::Component for Model {
         gtk::Box {
             set_orientation: gtk::Orientation::Horizontal,
             set_spacing: 10,
+            set_margin_end: 10,
+            set_margin_start: 10,
+            set_margin_top: 10,
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,

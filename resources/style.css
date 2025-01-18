@@ -54,3 +54,7 @@ treeview, .task {
 .date .due.past {
     background-color: #F26177;
 }
+
+.edit, .edit frame {
+    padding: 5px;
+}
