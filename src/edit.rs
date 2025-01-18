@@ -4,7 +4,6 @@ use relm4::ComponentController as _;
 #[derive(Debug)]
 pub enum MsgInput {
     Ok,
-    Flag(bool),
     Set(Box<crate::tasks::Task>),
     UpdateDate(DateType, Option<chrono::NaiveDate>),
     UpdateKeywords(std::collections::BTreeMap<String, String>),
@@ -142,32 +141,39 @@ impl relm4::Component for Model {
         use MsgInput::*;
 
         match msg {
-            Flag(flagged) => self.task.flagged = flagged,
             Ok => {
                 let start = widgets.buffer.start_iter();
-                let end = widgets.buffer.start_iter();
+                let end = widgets.buffer.end_iter();
                 self.task.note = widgets.buffer.text(&start, &end, true).to_string().into();
+                self.task.subject = widgets.subject.text().to_string();
+                self.task.flagged = widgets.flagged.is_active();
 
                 sender
                     .output(MsgOutput::Done(Box::new(self.task.clone())))
                     .ok();
             }
             Set(task) => {
-                self.task = *task;
-                self.created.emit(crate::widgets::calendar::MsgInput::Set(
-                    self.task.create_date,
-                ));
+                widgets.subject.set_text(&task.subject);
+                widgets.flagged.set_active(task.flagged);
+                widgets
+                    .buffer
+                    .set_text(&task.note.content().unwrap_or_default());
+
+                self.created
+                    .emit(crate::widgets::calendar::MsgInput::Set(task.create_date));
                 self.due
-                    .emit(crate::widgets::calendar::MsgInput::Set(self.task.due_date));
-                self.finish.emit(crate::widgets::calendar::MsgInput::Set(
-                    self.task.finish_date,
+                    .emit(crate::widgets::calendar::MsgInput::Set(task.due_date));
+                self.finish
+                    .emit(crate::widgets::calendar::MsgInput::Set(task.finish_date));
+                self.keywords
+                    .emit(crate::widgets::keywords::MsgInput::Set(task.tags.clone()));
+                self.priority.emit(crate::widgets::priority::MsgInput::Set(
+                    task.priority.clone(),
                 ));
-                self.keywords.emit(crate::widgets::keywords::MsgInput::Set(
-                    self.task.tags.clone(),
-                ));
-                self.threshold.emit(crate::widgets::calendar::MsgInput::Set(
-                    self.task.threshold_date,
-                ));
+                self.threshold
+                    .emit(crate::widgets::calendar::MsgInput::Set(task.threshold_date));
+
+                self.task = *task;
             }
             UpdateDate(date_type, date) => self.update_date(date_type, date),
             UpdateKeywords(keywords) => self.task.tags = keywords,
@@ -187,9 +193,8 @@ impl relm4::Component for Model {
 
                 gtk::Frame {
                     set_label: Some("Subject"),
+                    #[name = "subject"]
                     gtk::Entry {
-                        #[watch]
-                        set_text: &model.task.subject,
                         connect_activate => MsgInput::Ok,
                     },
                 },
@@ -200,17 +205,12 @@ impl relm4::Component for Model {
 
                         append: model.priority.widget(),
 
+                        #[name = "flagged"]
                         gtk::ToggleButton {
                             set_hexpand: true,
                             set_halign: gtk::Align::Center,
                             set_icon_name: "emblem-favorite",
                             set_tooltip_text: Some("Flag"),
-                            #[watch]
-                            set_active: model.task.flagged,
-
-                            connect_toggled[sender] => move |button| {
-                                sender.input(MsgInput::Flag(button.is_active()));
-                            },
                         },
                     },
                 },
@@ -246,8 +246,6 @@ impl relm4::Component for Model {
                         #[wrap(Some)]
                         #[name = "buffer"]
                         set_buffer = &gtk::TextBuffer {
-                            #[watch]
-                            set_text?: &model.task.note.content(),
                         },
                     },
                 },

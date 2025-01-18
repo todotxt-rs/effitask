@@ -22,6 +22,7 @@ pub enum MsgOutput {
 impl Model {
     fn add(&mut self, sender: relm4::ComponentSender<Self>, period: todo_txt::task::Period) {
         self.date = Some(period + self.date.unwrap_or_else(crate::date::today));
+        sender.input(MsgInput::Set(self.date));
         sender.output(MsgOutput::Updated(self.date)).ok();
     }
 
@@ -33,6 +34,7 @@ impl Model {
     ) {
         self.date = Some(crate::date::from_glib(date));
 
+        sender.input(MsgInput::Set(self.date));
         sender.output(MsgOutput::Updated(self.date)).ok();
         widgets.popover.popdown();
     }
@@ -69,10 +71,24 @@ impl relm4::Component for Model {
     ) {
         use MsgInput::*;
 
+        widgets.buttons.set_visible(widgets.r#box.is_sensitive());
+
         match msg {
             Add(period) => self.add(sender, period),
             DateSelected(date) => self.date_selected(widgets, sender, date),
-            Set(date) => self.date = date,
+            Set(date) => {
+                self.date = date;
+
+                if let Some(date) = self.date {
+                    widgets.entry.set_text(&date.format("%Y-%m-%d").to_string());
+                }
+
+                let date = self.date.unwrap_or_else(crate::date::today);
+
+                widgets.calendar.set_day(date.day() as i32);
+                widgets.calendar.set_month(date.month() as i32 - 1);
+                widgets.calendar.set_year(date.year());
+            }
             DateUpdated => {
                 sender.output(MsgOutput::Updated(self.date)).ok();
             }
@@ -101,24 +117,17 @@ impl relm4::Component for Model {
                         #[wrap(Some)]
                         #[name = "popover"]
                         set_popover = &gtk::Popover {
+                            #[name = "calendar"]
                             gtk::Calendar {
-                                #[watch]
-                                set_day?: model.date.map(|x| x.day() as i32),
-                                #[watch]
-                                set_month?: model.date.map(|x| x.month() as i32 - 1),
-                                #[watch]
-                                set_year?: model.date.map(|x| x.year()),
-
                                 connect_day_selected[sender] => move |this| {
                                     sender.input(MsgInput::DateSelected(this.date()));
                                 },
                             },
                         },
                     },
+                    #[name = "entry"]
                     gtk::Entry {
                         set_hexpand: true,
-                        #[watch]
-                        set_text?: &model.date.map(|x| x.format("%Y-%m-%d").to_string()),
                         set_width_request: 214,
 
                         connect_move_focus[sender] => move |_, _| {
@@ -126,11 +135,10 @@ impl relm4::Component for Model {
                         },
                     },
                 },
+                #[name = "buttons"]
                 gtk::Box {
                     set_halign: gtk::Align::End,
                     set_orientation: gtk::Orientation::Horizontal,
-                    #[watch]
-                    set_visible: r#box.is_sensitive(),
 
                     gtk::Button {
                         set_label: "+1y",

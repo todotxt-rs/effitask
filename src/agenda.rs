@@ -207,6 +207,7 @@ impl relm4::Component for Model {
         };
 
         let widgets = view_output!();
+        sender.input(MsgInput::DateSelect(init));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -232,7 +233,12 @@ impl relm4::Component for Model {
 
                 self.update_marks(widgets);
             }
-            DateSelect(date) => self.date = date,
+            DateSelect(date) => {
+                widgets.calendar.set_day(date.day() as i32);
+                widgets.calendar.set_month(date.month0() as i32);
+                widgets.calendar.set_year(date.year());
+                self.date = date;
+            }
             Update => (),
         }
 
@@ -250,13 +256,6 @@ impl relm4::Component for Model {
 
                 #[name = "calendar"]
                 gtk::Calendar {
-                    #[watch]
-                    set_day: model.date.day() as i32,
-                    #[watch]
-                    set_month: model.date.month() as i32 - 1,
-                    #[watch]
-                    set_year: model.date.year(),
-
                     connect_day_selected[sender] => move |this| {
                         sender.input(MsgInput::DateSelect(crate::date::from_glib(this.date())));
                     },

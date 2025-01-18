@@ -120,14 +120,16 @@ impl relm4::Component for Model {
                 self.count = self.count.saturating_sub(1);
             }
         }
+
+        widgets.button.set_visible(self.count > 0);
+        widgets
+            .button
+            .set_label(&format!("Notifications {}", self.count));
     }
 
     view! {
+        #[name = "button"]
         gtk::MenuButton {
-            #[watch]
-            set_visible: model.count > 0,
-            #[watch]
-            set_label: &format!("Notifications {}", model.count),
             set_direction: gtk::ArrowType::Down,
 
             #[wrap(Some)]
