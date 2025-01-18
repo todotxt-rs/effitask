@@ -251,6 +251,7 @@ impl relm4::Component for Model {
                 },
                 gtk::ActionBar {
                     pack_start = &gtk::Button {
+                        add_css_class: "suggested-action",
                         set_label: "Ok",
 
                         connect_clicked => MsgInput::Ok,
