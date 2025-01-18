@@ -74,6 +74,7 @@ pub struct Model {
     shortcuts: gtk::ShortcutsWindow,
     search: relm4::Controller<crate::search::Model>,
     tags: relm4::Controller<crate::widgets::tags::Model>,
+    _watcher: notify::RecommendedWatcher,
 }
 
 impl Model {
@@ -265,25 +266,33 @@ impl Model {
         log::info!("Tasks reloaded");
     }
 
-    fn watch(&self, sender: relm4::ComponentSender<Self>) {
+    fn watch(
+        config: &todo_txt::Config,
+        sender: relm4::ComponentSender<Self>,
+    ) -> notify::Result<notify::RecommendedWatcher> {
         use notify::Watcher as _;
 
-        let mut watcher = notify::recommended_watcher(move |res| match res {
-            Ok(_) => {
-                sender.input(Msg::Refresh);
-            }
-            Err(e) => log::warn!("watch error: {e:?}"),
-        })
-        .unwrap();
+        let mut watcher =
+            notify::recommended_watcher(move |res: notify::Result<notify::Event>| match res {
+                Ok(event) => {
+                    if matches!(event.kind, notify::EventKind::Modify(_)) {
+                        sender.input(Msg::Refresh);
+                    }
+                }
+                Err(e) => log::warn!("watch error: {e:?}"),
+            })
+            .unwrap();
 
-        log::debug!("watching {} for changes", self.config.todo_file);
+        log::debug!("watching {} for changes", config.todo_file);
 
         if let Err(err) = watcher.watch(
-            std::path::PathBuf::from(self.config.todo_file.clone()).as_path(),
-            notify::RecursiveMode::Recursive,
+            std::path::PathBuf::from(&config.todo_file).as_path(),
+            notify::RecursiveMode::NonRecursive,
         ) {
             log::warn!("Unable to setup hot reload: {err}");
         }
+
+        Ok(watcher)
     }
 
     fn shortcuts(window: &gtk::ApplicationWindow, sender: relm4::ComponentSender<Self>) {
@@ -403,6 +412,7 @@ impl relm4::Component for Model {
         let shortcuts = builder.object("shortcuts").unwrap();
 
         let model = Self {
+            _watcher: Self::watch(&init, sender.clone()).unwrap(),
             agenda,
             config: init,
             contexts,
@@ -423,7 +433,6 @@ impl relm4::Component for Model {
         model.add_tab_widgets(&widgets.notebook);
         model.update_tasks(&widgets);
         model.search.widget().set_visible(false);
-        model.watch(sender.clone());
 
         Self::shortcuts(&root, sender);
 
