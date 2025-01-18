@@ -43,7 +43,7 @@ pub enum Msg {
 }
 
 pub struct Model {
-    count: usize,
+    messages: Vec<ChannelData>,
 }
 
 impl Model {
@@ -59,13 +59,18 @@ impl Model {
         gtk::glib::ControlFlow::Continue
     }
 
-    fn add_message(&self, widgets: &ModelWidgets, level: log::Level, text: &str) {
+    fn add_message(&mut self, widgets: &ModelWidgets, level: log::Level, text: &str) {
         let class = level.to_string();
 
         let label = gtk::Label::new(Some(text));
         label.add_css_class(&class.to_lowercase());
 
         widgets.list_box.append(&label);
+        self.messages.push((level, text.to_string()));
+    }
+
+    fn higher_priority(&self) -> Option<log::Level> {
+        self.messages.iter().map(|x| x.0).max()
     }
 }
 
@@ -87,7 +92,9 @@ impl relm4::Component for Model {
         log::set_max_level(log::LevelFilter::Info);
         log::set_boxed_logger(Box::new(log)).unwrap_or_default();
 
-        let model = Self { count: 0 };
+        let model = Self {
+            messages: Vec::new(),
+        };
 
         let widgets = view_output!();
 
@@ -107,24 +114,30 @@ impl relm4::Component for Model {
         match msg {
             Msg::Add((level, text)) => {
                 self.add_message(widgets, level, &text);
-                self.count += 1;
             }
             Msg::Clear => {
                 use relm4::RelmRemoveAllExt as _;
 
                 widgets.list_box.remove_all();
-                self.count = 0;
+                self.messages = Vec::new();
             }
             Msg::Read(row) => {
                 widgets.list_box.remove(&row);
-                self.count = self.count.saturating_sub(1);
+                self.messages.remove(row.index() as usize);
             }
         }
 
-        widgets.button.set_visible(self.count > 0);
-        widgets
-            .button
-            .set_label(&format!("Notifications {}", self.count));
+        let count = self.messages.len();
+        widgets.button.set_visible(count > 0);
+        widgets.button.set_label(&format!("Notifications {count}"));
+
+        if let Some(priority) = self.higher_priority() {
+            widgets
+                .button
+                .set_css_classes(&[&priority.to_string().to_lowercase()]);
+        } else {
+            widgets.button.set_css_classes(&[]);
+        }
     }
 
     view! {
