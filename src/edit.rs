@@ -242,6 +242,7 @@ impl relm4::Component for Model {
                     gtk::TextView {
                         set_hexpand: true,
                         set_vexpand: true,
+                        set_size_request: (-1, 100),
                         #[wrap(Some)]
                         #[name = "buffer"]
                         set_buffer = &gtk::TextBuffer {
