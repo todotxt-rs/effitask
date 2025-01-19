@@ -1,5 +1,3 @@
-#![allow(deprecated)]
-
 use gtk::prelude::*;
 use relm4::ComponentController as _;
 
