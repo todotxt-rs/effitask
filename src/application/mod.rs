@@ -18,11 +18,11 @@ enum Page {
     Inbox = 0,
     Projects,
     Contexts,
+    Tags,
     Agenda,
     Flag,
     Done,
     Search,
-    Tags,
 }
 
 impl From<u32> for Page {
