@@ -1,3 +1,5 @@
+use async_std::prelude::FutureExt as _;
+
 #[derive(Clone, Debug, Default)]
 pub struct List {
     pub inner: todo_txt::task::List<super::Task>,
@@ -13,39 +15,35 @@ impl List {
     pub fn from_files(todo: &str, done: &str) -> Self {
         let mut list = Self::new();
 
-        list.load_todo(todo);
-        list.load_done(done);
+        list.todo = todo.to_string();
+        list.done = done.to_string();
+
+        async_std::task::block_on(async {
+            let todo = list.load_file(0, todo).await;
+            list.inner.extend(todo);
+
+            let done = list.load_file(list.inner.len(), done).await;
+            list.inner.extend(done);
+        });
 
         list
     }
 
-    fn load_todo(&mut self, todo: &str) {
-        let tasks = self.load_file(todo);
-
-        self.todo = todo.to_string();
-        self.inner.extend(tasks);
-    }
-
-    fn load_done(&mut self, done: &str) {
-        let tasks = self.load_file(done);
-
-        self.done = done.to_string();
-        self.inner.extend(tasks);
-    }
-
-    fn load_file(&self, path: &str) -> Vec<crate::tasks::Task> {
-        use std::io::BufRead;
+    async fn load_file(&self, first_id: usize, path: &str) -> Vec<crate::tasks::Task> {
+        use async_std::io::BufReadExt as _;
+        use async_std::stream::StreamExt as _;
 
         let mut tasks = Vec::new();
-        let Ok(file) = std::fs::File::open(path) else {
+        let Ok(file) = async_std::fs::File::open(path).await else {
             log::error!("Unable to open {path:?}");
 
             return tasks;
         };
 
-        let last_id = self.inner.len();
+        let mut last_id = first_id;
+        let mut lines = async_std::io::BufReader::new(file).lines();
 
-        for (id, line) in std::io::BufReader::new(file).lines().enumerate() {
+        while let Some(line) = lines.next().await {
             let line = line.unwrap();
 
             if line.is_empty() {
@@ -53,7 +51,8 @@ impl List {
             }
 
             let mut task = crate::tasks::Task::from(line);
-            task.id = last_id + id;
+            task.id = last_id;
+            last_id += 1;
             tasks.push(task);
         }
 
@@ -85,21 +84,25 @@ impl List {
     }
 
     pub fn write(&self) -> Result<(), String> {
-        let todo = self.inner.iter().filter(|x| !x.finished).cloned().collect();
-        self.write_tasks(&self.todo, todo)?;
+        async_std::task::block_on(async {
+            let (done, todo) = self.inner.tasks.clone().into_iter().partition(|x| x.finished);
 
-        let done = self.inner.iter().filter(|x| x.finished).cloned().collect();
-        self.write_tasks(&self.done, done)?;
+            let (a, b) = async { self.write_tasks(&self.todo, todo).await }
+                .join(async { self.write_tasks(&self.done, done).await })
+                .await;
+
+            a.and(b)
+        })?;
 
         Ok(())
     }
 
-    fn write_tasks(&self, file: &str, tasks: Vec<crate::tasks::Task>) -> Result<(), String> {
-        use std::io::Write;
+    async fn write_tasks(&self, file: &str, tasks: Vec<crate::tasks::Task>) -> Result<(), String> {
+        use async_std::io::WriteExt as _;
 
-        self.backup(file)?;
+        self.backup(file).await?;
 
-        let mut f = match std::fs::File::create(file) {
+        let mut f = match async_std::fs::File::create(file).await {
             Ok(f) => f,
             Err(err) => return Err(format!("Unable to write tasks: {err}")),
         };
@@ -110,19 +113,21 @@ impl List {
                 task.note = todo_txt::task::Note::None;
             }
 
-            match f.write_all(format!("{task}\n").as_bytes()) {
+            match f.write_all(format!("{task}\n").as_bytes()).await {
                 Ok(_) => (),
                 Err(err) => log::error!("Unable to write tasks: {err}"),
             };
         }
 
+        f.sync_all().await.map_err(|e| e.to_string())?;
+
         Ok(())
     }
 
-    fn backup(&self, file: &str) -> Result<(), String> {
+    async fn backup(&self, file: &str) -> Result<(), String> {
         let bak = format!("{file}.bak");
 
-        match std::fs::copy(file, bak) {
+        match async_std::fs::copy(file, bak).await {
             Ok(_) => Ok(()),
             Err(_) => Err(format!("Unable to backup {file}")),
         }
