@@ -251,7 +251,7 @@ impl Model {
             done: widgets.done_button.is_active(),
         });
 
-        self.agenda.sender().emit(crate::agenda::MsgInput::Update);
+        self.agenda.sender().emit(crate::agenda::Msg::Update);
         self.contexts
             .sender()
             .emit(crate::widgets::tags::MsgInput::Update);
@@ -346,8 +346,8 @@ impl relm4::Component for Model {
         let agenda = crate::agenda::Model::builder()
             .launch(crate::date::today())
             .forward(sender.input_sender(), |output| match output {
-                crate::agenda::MsgOutput::Complete(task) => Msg::Complete(task),
-                crate::agenda::MsgOutput::Edit(task) => Msg::Edit(task),
+                crate::widgets::task::MsgOutput::Complete(task) => Msg::Complete(task),
+                crate::widgets::task::MsgOutput::Edit(task) => Msg::Edit(task),
             });
 
         let contexts = crate::widgets::tags::Model::builder()
@@ -395,12 +395,13 @@ impl relm4::Component for Model {
                 crate::widgets::tags::MsgOutput::Edit(task) => Msg::Edit(task),
             });
 
-        let search = crate::search::Model::builder()
-            .launch(String::new())
-            .forward(sender.input_sender(), |output| match output {
-                crate::widgets::task::MsgOutput::Complete(task) => Msg::Complete(task),
-                crate::widgets::task::MsgOutput::Edit(task) => Msg::Edit(task),
-            });
+        let search =
+            crate::search::Model::builder()
+                .launch(())
+                .forward(sender.input_sender(), |output| match output {
+                    crate::widgets::task::MsgOutput::Complete(task) => Msg::Complete(task),
+                    crate::widgets::task::MsgOutput::Edit(task) => Msg::Edit(task),
+                });
 
         let tags = crate::widgets::tags::Model::builder()
             .launch(crate::widgets::tags::Type::Hashtags)

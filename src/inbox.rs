@@ -10,9 +10,7 @@ pub struct Model {
 }
 
 impl Model {
-    fn update_tasks(&mut self) {
-        use relm4::ComponentController as _;
-
+    fn tasks() -> Vec<crate::tasks::Task> {
         let today = crate::date::today();
 
         let list = crate::application::tasks();
@@ -30,9 +28,7 @@ impl Model {
             .cloned()
             .collect();
 
-        self.tasks
-            .sender()
-            .emit(crate::widgets::tasks::Msg::Update(tasks));
+        tasks
     }
 }
 
@@ -51,7 +47,7 @@ impl relm4::SimpleComponent for Model {
         use relm4::ComponentController as _;
 
         let tasks = crate::widgets::tasks::Model::builder()
-            .launch(())
+            .launch(crate::Filter::from(Self::tasks))
             .forward(sender.output_sender(), std::convert::identity);
 
         let model = Self { tasks };
@@ -62,8 +58,13 @@ impl relm4::SimpleComponent for Model {
     }
 
     fn update(&mut self, msg: Self::Input, _: relm4::ComponentSender<Self>) {
+        use relm4::ComponentController as _;
+
         match msg {
-            Msg::Update => self.update_tasks(),
+            Msg::Update => self
+                .tasks
+                .sender()
+                .emit(crate::widgets::tasks::MsgInput::NeedUpdate),
         }
     }
 

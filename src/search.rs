@@ -1,6 +1,9 @@
 use gtk::prelude::*;
 use relm4::ComponentController as _;
 
+static CURRENT_FILTER: std::sync::LazyLock<std::sync::RwLock<String>> =
+    std::sync::LazyLock::new(|| std::sync::RwLock::new(String::new()));
+
 #[derive(Debug)]
 pub enum MsgInput {
     Update,
@@ -8,65 +11,58 @@ pub enum MsgInput {
 }
 
 pub struct Model {
-    query: String,
     tasks: relm4::Controller<crate::widgets::tasks::Model>,
 }
 
 impl Model {
-    fn update_tasks(&mut self) {
-        self.update();
-    }
+    fn tasks() -> Vec<crate::tasks::Task> {
+        let current_filter = CURRENT_FILTER.read().unwrap();
 
-    fn update_filter(&mut self, filter: &str) {
-        self.query = filter.to_string();
-        self.update();
-    }
-
-    fn update(&self) {
-        let filter = self.query.to_lowercase();
+        let filter = current_filter.to_lowercase();
         let list = crate::application::tasks();
 
-        let tasks = list
-            .tasks
+        list.tasks
             .iter()
             .filter(|x| x.subject.to_lowercase().contains(filter.as_str()))
             .cloned()
-            .collect();
-
-        self.tasks.emit(crate::widgets::tasks::Msg::Update(tasks));
+            .collect()
     }
 }
 
 #[relm4::component(pub)]
 impl relm4::SimpleComponent for Model {
-    type Init = String;
+    type Init = ();
     type Input = MsgInput;
     type Output = crate::widgets::task::MsgOutput;
 
     fn init(
-        init: Self::Init,
+        _: Self::Init,
         root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         use relm4::Component as _;
 
         let tasks = crate::widgets::tasks::Model::builder()
-            .launch(())
+            .launch(crate::Filter::from(Self::tasks))
             .forward(sender.output_sender(), std::convert::identity);
 
-        let model = Self { query: init, tasks };
+        let model = Self { tasks };
 
         let widgets = view_output!();
 
         relm4::ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, _: relm4::ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: relm4::ComponentSender<Self>) {
         use MsgInput::*;
 
         match msg {
-            Update => self.update_tasks(),
-            UpdateFilter(filter) => self.update_filter(&filter),
+            Update => self.tasks.emit(crate::widgets::tasks::MsgInput::NeedUpdate),
+            UpdateFilter(filter) => {
+                let mut current_filter = CURRENT_FILTER.write().unwrap();
+                *current_filter = filter;
+                sender.input(Update);
+            }
         }
     }
 

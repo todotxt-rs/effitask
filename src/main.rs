@@ -5,12 +5,15 @@ mod application;
 mod date;
 mod done;
 mod edit;
+mod filter;
 mod flag;
 mod inbox;
 mod logger;
 mod search;
 mod tasks;
 mod widgets;
+
+use filter::Filter;
 
 fn main() {
     human_panic::setup_panic!();

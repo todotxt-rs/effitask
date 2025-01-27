@@ -2,7 +2,7 @@ use chrono::Datelike as _;
 use gtk::prelude::*;
 
 #[derive(Debug)]
-pub enum MsgInput {
+pub enum Msg {
     CalendarChange(Change),
     DateSelect(chrono::NaiveDate),
     Update,
@@ -16,21 +16,11 @@ pub enum Change {
     NextYear,
 }
 
-#[derive(Debug)]
-pub enum MsgOutput {
-    Complete(Box<crate::tasks::Task>),
-    Edit(Box<crate::tasks::Task>),
-}
-
 macro_rules! create {
     ($sender:ident) => {{
-        let component = crate::widgets::tasks::Model::builder().launch(()).forward(
-            $sender.output_sender(),
-            |output| match output {
-                crate::widgets::task::MsgOutput::Complete(task) => MsgOutput::Complete(task),
-                crate::widgets::task::MsgOutput::Edit(task) => MsgOutput::Edit(task),
-            },
-        );
+        let component = crate::widgets::tasks::Model::builder()
+            .launch(().into())
+            .forward($sender.output_sender(), std::convert::identity);
         component
             .widget()
             .set_vscrollbar_policy(gtk::PolicyType::Never);
@@ -47,7 +37,9 @@ macro_rules! update {
 
         $exp.set_expanded(!tasks.is_empty());
         $exp.set_sensitive(!tasks.is_empty());
-        $self.$task.emit(crate::widgets::tasks::Msg::Update(tasks));
+        $self
+            .$task
+            .emit(crate::widgets::tasks::MsgInput::Update(tasks));
     }};
 }
 
@@ -187,8 +179,8 @@ impl Model {
 impl relm4::Component for Model {
     type CommandOutput = ();
     type Init = chrono::NaiveDate;
-    type Input = MsgInput;
-    type Output = MsgOutput;
+    type Input = Msg;
+    type Output = crate::widgets::task::MsgOutput;
 
     fn init(
         init: Self::Init,
@@ -207,7 +199,7 @@ impl relm4::Component for Model {
         };
 
         let widgets = view_output!();
-        sender.input(MsgInput::DateSelect(init));
+        sender.input(Msg::DateSelect(init));
 
         relm4::ComponentParts { model, widgets }
     }
@@ -219,7 +211,7 @@ impl relm4::Component for Model {
         _: relm4::ComponentSender<Self>,
         _: &Self::Root,
     ) {
-        use MsgInput::*;
+        use Msg::*;
 
         match msg {
             CalendarChange(change) => {
@@ -260,16 +252,16 @@ impl relm4::Component for Model {
                 #[name = "calendar"]
                 gtk::Calendar {
                     connect_day_selected[sender] => move |this| {
-                        sender.input(MsgInput::DateSelect(crate::date::from_glib(this.date())));
+                        sender.input(Msg::DateSelect(crate::date::from_glib(this.date())));
                     },
-                    connect_next_month => MsgInput::CalendarChange(Change::NextMonth),
-                    connect_next_year => MsgInput::CalendarChange(Change::NextYear),
-                    connect_prev_month => MsgInput::CalendarChange(Change::PrevMonth),
-                    connect_prev_year => MsgInput::CalendarChange(Change::PrevYear),
+                    connect_next_month => Msg::CalendarChange(Change::NextMonth),
+                    connect_next_year => Msg::CalendarChange(Change::NextYear),
+                    connect_prev_month => Msg::CalendarChange(Change::PrevMonth),
+                    connect_prev_year => Msg::CalendarChange(Change::PrevYear),
                 },
                 gtk::Button {
                     set_label: "Today",
-                    connect_clicked => MsgInput::DateSelect(crate::date::today()),
+                    connect_clicked => Msg::DateSelect(crate::date::today()),
                 },
             },
             gtk::ScrolledWindow {
