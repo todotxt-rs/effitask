@@ -85,7 +85,12 @@ impl List {
 
     pub fn write(&self) -> Result<(), String> {
         async_std::task::block_on(async {
-            let (done, todo) = self.inner.tasks.clone().into_iter().partition(|x| x.finished);
+            let (done, todo) = self
+                .inner
+                .tasks
+                .clone()
+                .into_iter()
+                .partition(|x| x.finished);
 
             let (a, b) = async { self.write_tasks(&self.todo, todo).await }
                 .join(async { self.write_tasks(&self.done, done).await })

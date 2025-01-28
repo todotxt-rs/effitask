@@ -4,7 +4,6 @@ mod preferences;
 pub use globals::preferences::get as preferences;
 pub use globals::tasks::get as tasks;
 
-use globals::tasks::add as add_task;
 use preferences::Preferences;
 
 use gtk::prelude::*;
@@ -51,6 +50,8 @@ impl From<Page> for u32 {
 pub enum Msg {
     Adding,
     Add(String),
+    AskRefresh,
+    Cancel,
     Complete(Box<crate::tasks::Task>),
     Edit(Box<crate::tasks::Task>),
     EditCancel,
@@ -71,10 +72,10 @@ pub struct Model {
     inbox: relm4::Controller<crate::inbox::Model>,
     logger: relm4::Controller<crate::logger::Model>,
     projects: relm4::Controller<crate::widgets::tags::Model>,
-    shortcuts: gtk::ShortcutsWindow,
     search: relm4::Controller<crate::search::Model>,
+    shortcuts: gtk::ShortcutsWindow,
     tags: relm4::Controller<crate::widgets::tags::Model>,
-    _watcher: notify::RecommendedWatcher,
+    watcher: notify::RecommendedWatcher,
 }
 
 impl Model {
@@ -142,10 +143,12 @@ impl Model {
     }
 
     fn add(&mut self, widgets: &ModelWidgets, text: &str) {
-        match add_task(text) {
+        self.unwatch();
+        match globals::tasks::add(text) {
             Ok(_) => self.update_tasks(widgets),
             Err(err) => log::error!("Unable to create task: '{err}'"),
         }
+        self.watch();
 
         widgets.add_popover.popdown();
     }
@@ -187,7 +190,7 @@ impl Model {
             }
         }
 
-        match list.write() {
+        match self.write_tasks(&list) {
             Ok(_) => {
                 if list.tasks[id].finished {
                     log::info!("Task done");
@@ -215,7 +218,7 @@ impl Model {
             list.tasks[id] = task.clone();
         }
 
-        match list.write() {
+        match self.write_tasks(&list) {
             Ok(_) => (),
             Err(err) => log::error!("Unable to save tasks: {err}"),
         };
@@ -266,33 +269,25 @@ impl Model {
         log::info!("Tasks reloaded");
     }
 
-    fn watch(
-        config: &todo_txt::Config,
-        sender: relm4::ComponentSender<Self>,
-    ) -> notify::Result<notify::RecommendedWatcher> {
+    fn watch(&mut self) {
         use notify::Watcher as _;
 
-        let mut watcher =
-            notify::recommended_watcher(move |res: notify::Result<notify::Event>| match res {
-                Ok(event) => {
-                    if matches!(event.kind, notify::EventKind::Modify(_)) {
-                        sender.input(Msg::Refresh);
-                    }
-                }
-                Err(e) => log::warn!("watch error: {e:?}"),
-            })
-            .unwrap();
+        log::debug!("watching {} for changes", self.config.todo_file);
 
-        log::debug!("watching {} for changes", config.todo_file);
-
-        if let Err(err) = watcher.watch(
-            std::path::PathBuf::from(&config.todo_file).as_path(),
+        if let Err(err) = self.watcher.watch(
+            std::path::PathBuf::from(&self.config.todo_file).as_path(),
             notify::RecursiveMode::NonRecursive,
         ) {
             log::warn!("Unable to setup hot reload: {err}");
         }
+    }
 
-        Ok(watcher)
+    fn unwatch(&mut self) {
+        use notify::Watcher as _;
+
+        self.watcher
+            .unwatch(std::path::PathBuf::from(&self.config.todo_file).as_path())
+            .ok();
     }
 
     fn shortcuts(window: &gtk::ApplicationWindow, sender: relm4::ComponentSender<Self>) {
@@ -325,6 +320,14 @@ impl Model {
         }
 
         window.add_controller(controller);
+    }
+
+    fn write_tasks(&mut self, list: &crate::tasks::List) -> Result<(), String> {
+        self.unwatch();
+        let result = list.write();
+        self.watch();
+
+        result
     }
 }
 
@@ -411,8 +414,22 @@ impl relm4::Component for Model {
         let builder = gtk::Builder::from_resource("/txt/todo/effitask/shortcuts.ui");
         let shortcuts = builder.object("shortcuts").unwrap();
 
-        let model = Self {
-            _watcher: Self::watch(&init, sender.clone()).unwrap(),
+        let watcher = {
+            let sender = sender.clone();
+
+            notify::recommended_watcher(move |res: notify::Result<notify::Event>| match res {
+                Ok(event) => {
+                    if matches!(event.kind, notify::EventKind::Modify(_)) {
+                        sender.input(Msg::AskRefresh);
+                    }
+                }
+                Err(e) => log::warn!("watch error: {e:?}"),
+            })
+            .unwrap()
+        };
+
+        let mut model = Self {
+            watcher,
             agenda,
             config: init,
             contexts,
@@ -426,6 +443,8 @@ impl relm4::Component for Model {
             shortcuts,
             tags,
         };
+
+        model.watch();
 
         let widgets = view_output!();
 
@@ -449,6 +468,8 @@ impl relm4::Component for Model {
         match msg {
             Msg::Add(task) => self.add(widgets, &task),
             Msg::Adding => widgets.add_popover.popup(),
+            Msg::AskRefresh => widgets.ask.set_visible(true),
+            Msg::Cancel => widgets.ask.set_visible(false),
             Msg::Complete(task) => self.complete(widgets, &task),
             Msg::EditCancel => self.edit.widget().set_visible(false),
             Msg::EditDone(task) => self.save(widgets, &task),
@@ -457,7 +478,10 @@ impl relm4::Component for Model {
                 widgets.search.grab_focus();
             }
             Msg::Help => self.shortcuts.present(),
-            Msg::Refresh => self.update_tasks(widgets),
+            Msg::Refresh => {
+                self.update_tasks(widgets);
+                widgets.ask.set_visible(false);
+            }
             Msg::Search(query) => self.search(widgets, &query),
         }
     }
@@ -531,6 +555,26 @@ impl relm4::Component for Model {
                         connect_search_changed[sender] => move |this| {
                             sender.input(Msg::Search(this.text().to_string()));
                         },
+                    },
+                },
+                #[name = "ask"]
+                gtk::Box {
+                    add_css_class: "ask",
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_visible: false,
+
+                    gtk::Label {
+                        set_hexpand: true,
+                        set_text: "Tasks have been modified from an external program, would you like to reload them?",
+                    },
+                    gtk::Button {
+                        add_css_class: "suggested-action",
+                        set_label: "Yes",
+                        connect_clicked => Msg::Refresh,
+                    },
+                    gtk::Button {
+                        set_label: "No",
+                        connect_clicked => Msg::Cancel,
                     },
                 },
                 gtk::Paned {

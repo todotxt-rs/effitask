@@ -58,3 +58,16 @@ treeview, .task {
 .edit, .edit frame {
     padding: 5px;
 }
+
+.ask {
+    padding: 5px;
+    background-color: #F26177;
+}
+
+.ask > label {
+    font-weight: bold;
+}
+
+.ask button {
+    margin: 5px;
+}
