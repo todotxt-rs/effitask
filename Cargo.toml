@@ -10,7 +10,7 @@ rust-version = "1.80"
 human-panic = "2.0"
 notify = "8.0"
 pulldown-cmark = "0.12"
-rand = "0.8"
+rand = "0.9"
 regex = "1.0"
 relm4 = { git = "https://github.com/Relm4/Relm4.git", rev = "e24915ac03e5ef1ec6f489ac7aeb26ec009f1618" }
 relm4-components = "0.9"
