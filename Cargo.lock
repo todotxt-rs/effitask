@@ -447,10 +447,8 @@ dependencies = [
  "log",
  "notify",
  "pulldown-cmark",
- "rand",
  "regex",
- "relm4 0.9.1 (git+https://github.com/Relm4/Relm4.git?rev=e24915ac03e5ef1ec6f489ac7aeb26ec009f1618)",
- "relm4-components",
+ "relm4",
  "todo-txt",
 ]
 
@@ -491,7 +489,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1509,23 +1507,6 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "relm4"
 version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30837553c1a8cfea1a404c83ec387c5c8ff9358e1060b057c274c5daa5035ad1"
-dependencies = [
- "flume",
- "fragile",
- "futures",
- "gtk4",
- "once_cell",
- "relm4-css 0.9.0",
- "relm4-macros 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "relm4"
-version = "0.9.1"
 source = "git+https://github.com/Relm4/Relm4.git?rev=e24915ac03e5ef1ec6f489ac7aeb26ec009f1618#e24915ac03e5ef1ec6f489ac7aeb26ec009f1618"
 dependencies = [
  "flume",
@@ -1533,44 +1514,16 @@ dependencies = [
  "futures",
  "gtk4",
  "once_cell",
- "relm4-css 0.9.1",
- "relm4-macros 0.9.1 (git+https://github.com/Relm4/Relm4.git?rev=e24915ac03e5ef1ec6f489ac7aeb26ec009f1618)",
+ "relm4-css",
+ "relm4-macros",
  "tokio",
  "tracing",
 ]
 
 [[package]]
-name = "relm4-components"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb3d67f2982131c5e6047af4278d8fe750266767e57b58bc15f2e11e190eef36"
-dependencies = [
- "once_cell",
- "relm4 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracker",
-]
-
-[[package]]
-name = "relm4-css"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d3b924557df1cddc687b60b313c4b76620fdbf0e463afa4b29f67193ccf37f9"
-
-[[package]]
 name = "relm4-css"
 version = "0.9.1"
 source = "git+https://github.com/Relm4/Relm4.git?rev=e24915ac03e5ef1ec6f489ac7aeb26ec009f1618#e24915ac03e5ef1ec6f489ac7aeb26ec009f1618"
-
-[[package]]
-name = "relm4-macros"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a895a7455441a857d100ca679bd24a92f91d28b5e3df63296792ac1af2eddde"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "relm4-macros"
@@ -1607,7 +1560,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1872,26 +1825,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracker"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce5c98457ff700aaeefcd4a4a492096e78a2af1dd8523c66e94a3adb0fdbd415"
-dependencies = [
- "tracker-macros",
-]
-
-[[package]]
-name = "tracker-macros"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc19eb2373ccf3d1999967c26c3d44534ff71ae5d8b9dacf78f4b13132229e48"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "unicase"
 version = "2.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1899,9 +1832,9 @@ checksum = "75b844d17643ee918803943289730bec8aac480150456169e647ed0b576ba539"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.15"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11cd88e12b17c6494200a9c1b683a04fcac9573ed74cd1b62aeb2727c5592243"
+checksum = "a210d160f08b701c8721ba1c726c11662f877ea6b7094007e1ca9a1041945034"
 
 [[package]]
 name = "unicode-width"
@@ -2135,9 +2068,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winnow"
-version = "0.6.24"
+version = "0.6.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8d71a593cc5c42ad7876e2c1fda56f314f3754c084128833e64f1345ff8a03a"
+checksum = "ad699df48212c6cc6eb4435f35500ac6fd3b9913324f938aea302022ce19d310"
 dependencies = [
  "memchr",
 ]
