@@ -97,6 +97,7 @@ impl relm4::Component for Model {
         };
 
         let widgets = view_output!();
+        widgets.button.set_visible(false);
 
         GLOBAL.with(move |global| *global.borrow_mut() = Some((sender, rx)));
         gtk::glib::idle_add(Self::receive);
