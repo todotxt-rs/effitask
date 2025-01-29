@@ -132,6 +132,7 @@ impl relm4::Component for Model {
                     set_active: model.priority == 26,
                     set_group: Some(&a),
                     set_label: "Z",
+                    set_tooltip_text: Some("No priority"),
 
                     connect_clicked[sender] => move |_| {
                         sender.output(MsgOutput::Updated(26.into())).ok();
