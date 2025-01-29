@@ -276,32 +276,36 @@ impl relm4::Component for Model {
                 gtk::Box {
                     set_hexpand: true,
                     set_orientation: gtk::Orientation::Vertical,
-                    set_vexpand: true,
 
                     #[name = "past_exp"]
                     gtk::Expander {
                         set_child: Some(model.past.widget()),
                         set_label: Some("Past due"),
+                        set_vexpand: false,
                     },
                     #[name = "today_exp"]
                     gtk::Expander {
                         set_child: Some(model.today.widget()),
                         set_label: Some("Today"),
+                        set_vexpand: false,
                     },
                     #[name = "tomorrow_exp"]
                     gtk::Expander {
                         set_child: Some(model.tomorrow.widget()),
                         set_label: Some("Tomorrow"),
+                        set_vexpand: false,
                     },
                     #[name = "week_exp"]
                     gtk::Expander {
                         set_child: Some(model.week.widget()),
                         set_label: Some("This week"),
+                        set_vexpand: false,
                     },
                     #[name = "month_exp"]
                     gtk::Expander {
                         set_child: Some(model.month.widget()),
                         set_label: Some("This month"),
+                        set_vexpand: false,
                     },
                 },
             },
