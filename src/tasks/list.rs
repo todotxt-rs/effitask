@@ -1,5 +1,24 @@
 use async_std::prelude::FutureExt as _;
 
+macro_rules! tags {
+    ($self:ident, $kind:ident) => {{
+        let today = crate::date::today();
+        let preferences = crate::application::preferences();
+
+        $self
+            .inner
+            .iter()
+            .filter(|x| {
+                (preferences.done || !x.finished)
+                    && (preferences.defered
+                        || x.threshold_date.is_none()
+                        || x.threshold_date.unwrap() <= today)
+            })
+            .collect::<todo_txt::task::List<_>>()
+            .$kind()
+    }};
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct List {
     pub inner: todo_txt::task::List<super::Task>,
@@ -60,27 +79,15 @@ impl List {
     }
 
     pub fn projects(&self) -> Vec<String> {
-        let today = crate::date::today();
-
-        self.inner
-            .iter()
-            .filter(|x| {
-                !x.finished && (x.threshold_date.is_none() || x.threshold_date.unwrap() <= today)
-            })
-            .collect::<todo_txt::task::List<_>>()
-            .projects()
+        tags!(self, projects)
     }
 
     pub fn contexts(&self) -> Vec<String> {
-        let today = crate::date::today();
+        tags!(self, contexts)
+    }
 
-        self.inner
-            .iter()
-            .filter(|x| {
-                !x.finished && (x.threshold_date.is_none() || x.threshold_date.unwrap() <= today)
-            })
-            .collect::<todo_txt::task::List<_>>()
-            .contexts()
+    pub fn hashtags(&self) -> Vec<String> {
+        tags!(self, hashtags)
     }
 
     pub fn write(&self) -> Result<(), String> {
