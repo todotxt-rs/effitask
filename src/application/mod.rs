@@ -265,8 +265,6 @@ impl Model {
         self.tags
             .sender()
             .emit(crate::widgets::tags::MsgInput::Update);
-
-        log::info!("Tasks reloaded");
     }
 
     fn watch(&mut self) {
@@ -481,6 +479,7 @@ impl relm4::Component for Model {
             Msg::Refresh => {
                 self.update_tasks(widgets);
                 widgets.ask.set_visible(false);
+                log::info!("Tasks reloaded");
             }
             Msg::Search(query) => self.search(widgets, &query),
         }
