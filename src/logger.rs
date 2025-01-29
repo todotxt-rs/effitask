@@ -160,6 +160,7 @@ impl relm4::Component for Model {
 
                         #[name = "list_box"]
                         gtk::ListBox {
+                            set_selection_mode: gtk::SelectionMode::None,
                             connect_row_activated[sender] => move |_, row| sender.input(Msg::Read(row.clone())),
                         }
                     },

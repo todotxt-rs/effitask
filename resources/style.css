@@ -13,6 +13,7 @@ notebook tabs tab:checked {
 
 .log list row label {
     font-size: 20px;
+    padding: 0 5px;
 }
 
 .log list row, .log label, .log count {
