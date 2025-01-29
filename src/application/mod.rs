@@ -249,6 +249,7 @@ impl Model {
         globals::preferences::replace(crate::application::Preferences {
             defered: widgets.defered_button.is_active(),
             done: widgets.done_button.is_active(),
+            hidden: widgets.hidden_button.is_active(),
         });
 
         self.agenda.sender().emit(crate::agenda::Msg::Update);
@@ -326,6 +327,14 @@ impl Model {
         self.watch();
 
         result
+    }
+
+    fn check_button_set_markup(check_button: &gtk::CheckButton) {
+        if let Some(child) = check_button.child() {
+            if let Ok(label) = child.downcast::<gtk::Label>() {
+                label.set_use_markup(true);
+            }
+        }
     }
 }
 
@@ -452,6 +461,10 @@ impl relm4::Component for Model {
         model.update_tasks(&widgets);
         model.search.widget().set_visible(false);
 
+        Self::check_button_set_markup(&widgets.defered_button);
+        Self::check_button_set_markup(&widgets.done_button);
+        Self::check_button_set_markup(&widgets.hidden_button);
+
         Self::shortcuts(&root, sender);
 
         relm4::ComponentParts { model, widgets }
@@ -530,13 +543,29 @@ impl relm4::Component for Model {
                                 set_orientation: gtk::Orientation::Vertical,
                                 #[name = "defered_button"]
                                 gtk::CheckButton {
-                                    set_label: Some("Display defered tasks"),
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Label::new(
+                                        Some("Display <b>defered</b> tasks"),
+                                    ),
 
                                     connect_toggled => Msg::Refresh,
                                 },
                                 #[name = "done_button"]
                                 gtk::CheckButton {
-                                    set_label: Some("Display done tasks"),
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Label::new(
+                                        Some("Display <b>done</b> tasks"),
+                                    ),
+
+                                    connect_toggled => Msg::Refresh,
+                                },
+                                #[name = "hidden_button"]
+                                gtk::CheckButton {
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Label::new(
+                                        Some("Display <b>hidden</b> tasks"),
+                                    ),
+
                                     connect_toggled => Msg::Refresh,
                                 },
                             },

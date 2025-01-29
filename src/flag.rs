@@ -20,6 +20,7 @@ impl Model {
             .filter(|x| {
                 x.flagged
                     && (preferences.done || !x.finished)
+                    && (preferences.hidden || !x.hidden)
                     && (preferences.defered
                         || x.threshold_date.is_none()
                         || x.threshold_date.unwrap() <= today)

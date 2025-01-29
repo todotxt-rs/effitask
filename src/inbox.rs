@@ -21,6 +21,7 @@ impl Model {
             .filter(|x| {
                 !x.finished
                     && x.projects.is_empty()
+                    && (preferences.hidden || !x.hidden)
                     && (preferences.defered
                         || x.threshold_date.is_none()
                         || x.threshold_date.unwrap() <= today)

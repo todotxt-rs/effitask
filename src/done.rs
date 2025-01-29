@@ -12,7 +12,13 @@ pub struct Model {
 impl Model {
     fn tasks() -> Vec<crate::tasks::Task> {
         let list = crate::application::tasks();
-        list.tasks.iter().filter(|x| x.finished).cloned().collect()
+        let preferences = crate::application::preferences();
+
+        list.tasks
+            .iter()
+            .filter(|x| x.finished && (preferences.hidden || !x.hidden))
+            .cloned()
+            .collect()
     }
 }
 

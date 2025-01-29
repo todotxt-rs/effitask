@@ -137,6 +137,7 @@ impl Model {
             .filter(|x| {
                 if let Some(due_date) = x.due_date {
                     (preferences.done || !x.finished)
+                        && (preferences.hidden || !x.hidden)
                         && (preferences.defered
                             || x.threshold_date.is_none()
                             || start.is_none()

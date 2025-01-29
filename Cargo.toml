@@ -29,6 +29,7 @@ features = ["dotenv"]
 [dependencies.gtk]
 package = "gtk4"
 version = "0.9"
+features = ["v4_8"]
 
 [dependencies.log]
 version = "0.4"
