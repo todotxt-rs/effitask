@@ -3,8 +3,7 @@ name = "effitask"
 version = "0.1.0"
 authors = ["Sanpi <sanpi@homecomputing.fr>"]
 homepage = "https://github.com/todotxt-rs/effitask"
-edition = "2021"
-rust-version = "1.80"
+edition = "2024"
 
 [dependencies]
 human-panic = "2.0"
