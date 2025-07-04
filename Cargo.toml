@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 human-panic = "2.0"
-notify = "8.0"
+notify = "8.1"
 pulldown-cmark = "0.13"
 regex = "1.0"
 relm4 = { git = "https://github.com/Relm4/Relm4.git", rev = "e24915ac03e5ef1ec6f489ac7aeb26ec009f1618" }
