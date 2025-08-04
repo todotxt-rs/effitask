@@ -5,4 +5,4 @@ updates:
   schedule:
     interval: daily
   ignore:
-    - update-types: ["version-update:semver-patch"]
+    - update-types: ["version-update:semver-patch", "version-update:semver-minor"]
