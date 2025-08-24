@@ -15,8 +15,8 @@ impl Model {
 
         let list = crate::application::tasks();
         let preferences = crate::application::preferences();
-        let tasks = list
-            .tasks
+
+        list.tasks
             .iter()
             .filter(|x| {
                 !x.finished
@@ -27,9 +27,7 @@ impl Model {
                         || x.threshold_date.unwrap() <= today)
             })
             .cloned()
-            .collect();
-
-        tasks
+            .collect()
     }
 }
 

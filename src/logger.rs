@@ -49,10 +49,10 @@ pub struct Model {
 impl Model {
     fn receive() -> gtk::glib::ControlFlow {
         GLOBAL.with(|global| {
-            if let Some((ref sender, ref rx)) = *global.borrow() {
-                if let Ok(message) = rx.try_recv() {
-                    sender.input(Msg::Add(message));
-                }
+            if let Some((ref sender, ref rx)) = *global.borrow()
+                && let Ok(message) = rx.try_recv()
+            {
+                sender.input(Msg::Add(message));
             }
         });
 

@@ -131,8 +131,7 @@ impl Model {
     ) -> Vec<crate::tasks::Task> {
         let preferences = crate::application::preferences();
 
-        let tasks = list
-            .tasks
+        list.tasks
             .iter()
             .filter(|x| {
                 if let Some(due_date) = x.due_date {
@@ -149,9 +148,7 @@ impl Model {
                 }
             })
             .cloned()
-            .collect();
-
-        tasks
+            .collect()
     }
 
     fn update_marks(&self, widgets: &ModelWidgets) {

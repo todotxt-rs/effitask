@@ -97,10 +97,10 @@ impl Model {
             if theme.ends_with(":dark") {
                 stylesheet = "style_dark.css";
             }
-        } else if let Some(setting) = gtk::Settings::default() {
-            if setting.is_gtk_application_prefer_dark_theme() {
-                stylesheet = "style_dark.css";
-            }
+        } else if let Some(setting) = gtk::Settings::default()
+            && setting.is_gtk_application_prefer_dark_theme()
+        {
+            stylesheet = "style_dark.css";
         }
 
         format!("/txt/todo/effitask/{stylesheet}")
@@ -169,25 +169,25 @@ impl Model {
 
         let t = list.tasks[id].clone();
 
-        if t.finished {
-            if let Some(ref recurrence) = t.recurrence {
-                let due = if recurrence.strict && t.due_date.is_some() {
-                    t.due_date.unwrap()
-                } else {
-                    crate::date::today()
-                };
+        if t.finished
+            && let Some(ref recurrence) = t.recurrence
+        {
+            let due = if recurrence.strict && t.due_date.is_some() {
+                t.due_date.unwrap()
+            } else {
+                crate::date::today()
+            };
 
-                let mut new: crate::tasks::Task = t.clone();
-                new.uncomplete();
-                new.create_date = Some(crate::date::today());
-                new.due_date = Some(recurrence.clone() + due);
+            let mut new: crate::tasks::Task = t.clone();
+            new.uncomplete();
+            new.create_date = Some(crate::date::today());
+            new.due_date = Some(recurrence.clone() + due);
 
-                if let Some(threshold_date) = t.threshold_date {
-                    new.threshold_date = Some(recurrence.clone() + threshold_date);
-                }
-
-                list.push(new);
+            if let Some(threshold_date) = t.threshold_date {
+                new.threshold_date = Some(recurrence.clone() + threshold_date);
             }
+
+            list.push(new);
         }
 
         match self.write_tasks(&list) {
@@ -330,10 +330,10 @@ impl Model {
     }
 
     fn check_button_set_markup(check_button: &gtk::CheckButton) {
-        if let Some(child) = check_button.child() {
-            if let Ok(label) = child.downcast::<gtk::Label>() {
-                label.set_use_markup(true);
-            }
+        if let Some(child) = check_button.child()
+            && let Ok(label) = child.downcast::<gtk::Label>()
+        {
+            label.set_use_markup(true);
         }
     }
 }
