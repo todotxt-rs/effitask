@@ -1,5 +1,3 @@
-use async_std::prelude::FutureExt as _;
-
 macro_rules! tags {
     ($self:ident, $kind:ident) => {{
         let today = crate::date::today();
@@ -37,7 +35,7 @@ impl List {
         list.todo = todo.to_string();
         list.done = done.to_string();
 
-        async_std::task::block_on(async {
+        smol::block_on(async {
             let todo = list.load_file(0, todo).await;
             list.inner.extend(todo);
 
@@ -49,18 +47,18 @@ impl List {
     }
 
     async fn load_file(&self, first_id: usize, path: &str) -> Vec<crate::tasks::Task> {
-        use async_std::io::BufReadExt as _;
-        use async_std::stream::StreamExt as _;
+        use smol::io::AsyncBufReadExt as _;
+        use smol::stream::StreamExt as _;
 
         let mut tasks = Vec::new();
-        let Ok(file) = async_std::fs::File::open(path).await else {
+        let Ok(file) = smol::fs::File::open(path).await else {
             log::error!("Unable to open {path:?}");
 
             return tasks;
         };
 
         let mut last_id = first_id;
-        let mut lines = async_std::io::BufReader::new(file).lines();
+        let mut lines = smol::io::BufReader::new(file).lines();
 
         while let Some(line) = lines.next().await {
             let line = line.unwrap();
@@ -91,7 +89,7 @@ impl List {
     }
 
     pub fn write(&self) -> Result<(), String> {
-        async_std::task::block_on(async {
+        smol::block_on(async {
             let (done, todo) = self
                 .inner
                 .tasks
@@ -99,22 +97,21 @@ impl List {
                 .into_iter()
                 .partition(|x| x.finished);
 
-            let (a, b) = async { self.write_tasks(&self.todo, todo).await }
-                .join(async { self.write_tasks(&self.done, done).await })
-                .await;
+            let a = self.write_tasks(&self.todo, todo);
+            let b = self.write_tasks(&self.done, done);
 
-            a.and(b)
+            a.await.and(b.await)
         })?;
 
         Ok(())
     }
 
     async fn write_tasks(&self, file: &str, tasks: Vec<crate::tasks::Task>) -> Result<(), String> {
-        use async_std::io::WriteExt as _;
+        use smol::io::AsyncWriteExt as _;
 
         self.backup(file).await?;
 
-        let mut f = match async_std::fs::File::create(file).await {
+        let mut f = match smol::fs::File::create(file).await {
             Ok(f) => f,
             Err(err) => return Err(format!("Unable to write tasks: {err}")),
         };
@@ -139,7 +136,7 @@ impl List {
     async fn backup(&self, file: &str) -> Result<(), String> {
         let bak = format!("{file}.bak");
 
-        match async_std::fs::copy(file, bak).await {
+        match smol::fs::copy(file, bak).await {
             Ok(_) => Ok(()),
             Err(_) => Err(format!("Unable to backup {file}")),
         }
