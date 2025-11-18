@@ -431,9 +431,9 @@ dependencies = [
 
 [[package]]
 name = "envir"
-version = "1.1.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "954de38c38df650d2b7f42c19eb47d0cec9f48f2be384c106be430dab8b42c10"
+checksum = "fcbac2ce3c1c06805852cfd36cbb37acfd991df267302f7c96c2e77f9dc7ab93"
 dependencies = [
  "dotenvy",
  "envir_derive",
