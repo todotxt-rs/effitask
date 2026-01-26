@@ -18,7 +18,7 @@ version = "0.4"
 default-features = false
 
 [dependencies.envir]
-version = "1.2"
+version = "1.3"
 default-features = false
 features = ["dotenv"]
 
