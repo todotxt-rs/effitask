@@ -172,8 +172,10 @@ impl Model {
         if t.finished
             && let Some(ref recurrence) = t.recurrence
         {
-            let due = if recurrence.strict && t.due_date.is_some() {
-                t.due_date.unwrap()
+            let due = if recurrence.strict
+                && let Some(due_date) = t.due_date
+            {
+                due_date
             } else {
                 crate::date::today()
             };

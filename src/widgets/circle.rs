@@ -13,10 +13,9 @@ impl Model {
             f64::from(drawing_area.height_request()) / 2.,
         );
 
-        if task.finished || task.due_date.is_none() {
-            context.set_source_rgb(0.8, 0.8, 0.8);
-        } else {
-            let due_date = task.due_date.unwrap();
+        if !task.finished
+            && let Some(due_date) = task.due_date
+        {
             let today = crate::date::today();
 
             if due_date < today {
@@ -24,6 +23,8 @@ impl Model {
             } else {
                 context.set_source_rgb(1., 0.8, 0.2);
             }
+        } else {
+            context.set_source_rgb(0.8, 0.8, 0.8);
         }
 
         context.set_line_width(8.);
