@@ -36,4 +36,4 @@ version = "4.1"
 features = ["config", "extended"]
 
 [build-dependencies]
-glib-build-tools = "0.21"
+glib-build-tools = "0.22"
