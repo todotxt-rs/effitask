@@ -5,7 +5,7 @@ use relm4::ComponentController as _;
 pub enum MsgInput {
     Ok,
     Set(Box<crate::tasks::Task>),
-    UpdateDate(DateType, Option<chrono::NaiveDate>),
+    UpdateDate(DateType, Option<jiff::civil::Date>),
     UpdateKeywords(std::collections::BTreeMap<String, String>),
     UpdatePriority(todo_txt::Priority),
     UpdateRecurrence(Option<todo_txt::task::Recurrence>),
@@ -29,7 +29,7 @@ pub struct Model {
 }
 
 impl Model {
-    fn update_date(&mut self, date_type: DateType, date: Option<chrono::NaiveDate>) {
+    fn update_date(&mut self, date_type: DateType, date: Option<jiff::civil::Date>) {
         use DateType::*;
 
         match date_type {

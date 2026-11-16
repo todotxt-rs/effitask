@@ -11,7 +11,7 @@ pub struct Model {
 
 impl Model {
     fn tasks() -> Vec<crate::tasks::Task> {
-        let today = crate::date::today();
+        let today = todo_txt::date::today();
         let list = crate::application::tasks();
         let preferences = crate::application::preferences();
 

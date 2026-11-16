@@ -177,12 +177,12 @@ impl Model {
             {
                 due_date
             } else {
-                crate::date::today()
+                todo_txt::date::today()
             };
 
             let mut new: crate::tasks::Task = t.clone();
             new.uncomplete();
-            new.create_date = Some(crate::date::today());
+            new.create_date = Some(todo_txt::date::today());
             new.due_date = Some(recurrence.clone() + due);
 
             if let Some(threshold_date) = t.threshold_date {
@@ -355,7 +355,7 @@ impl relm4::Component for Model {
         let logger = crate::logger::Model::builder().launch(()).detach();
 
         let agenda = crate::agenda::Model::builder()
-            .launch(crate::date::today())
+            .launch(todo_txt::date::today())
             .forward(sender.input_sender(), |output| match output {
                 crate::widgets::task::MsgOutput::Complete(task) => Msg::Complete(task),
                 crate::widgets::task::MsgOutput::Edit(task) => Msg::Edit(task),

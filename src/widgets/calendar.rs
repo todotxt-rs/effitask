@@ -1,8 +1,7 @@
-use chrono::Datelike as _;
 use gtk::prelude::*;
 
 pub struct Model {
-    date: Option<chrono::NaiveDate>,
+    date: Option<jiff::civil::Date>,
     label: &'static str,
 }
 
@@ -11,17 +10,17 @@ pub enum MsgInput {
     Add(todo_txt::task::Period),
     DateSelected(gtk::glib::DateTime),
     DateUpdated,
-    Set(Option<chrono::NaiveDate>),
+    Set(Option<jiff::civil::Date>),
 }
 
 #[derive(Debug)]
 pub enum MsgOutput {
-    Updated(Option<chrono::NaiveDate>),
+    Updated(Option<jiff::civil::Date>),
 }
 
 impl Model {
     fn add(&mut self, sender: relm4::ComponentSender<Self>, period: todo_txt::task::Period) {
-        self.date = Some(period + self.date.unwrap_or_else(crate::date::today));
+        self.date = Some(period + self.date.unwrap_or_else(todo_txt::date::today));
         sender.input(MsgInput::Set(self.date));
         sender.output(MsgOutput::Updated(self.date)).ok();
     }
@@ -80,14 +79,16 @@ impl relm4::Component for Model {
                 self.date = date;
 
                 if let Some(date) = self.date {
-                    widgets.entry.set_text(&date.format("%Y-%m-%d").to_string());
+                    widgets
+                        .entry
+                        .set_text(&date.strftime("%Y-%m-%d").to_string());
                 }
 
-                let date = self.date.unwrap_or_else(crate::date::today);
+                let date = self.date.unwrap_or_else(todo_txt::date::today);
 
-                widgets.calendar.set_day(date.day() as i32);
+                widgets.calendar.set_day(date.day().into());
                 widgets.calendar.set_month(date.month() as i32 - 1);
-                widgets.calendar.set_year(date.year());
+                widgets.calendar.set_year(date.year().into());
             }
             DateUpdated => {
                 sender.output(MsgOutput::Updated(self.date)).ok();

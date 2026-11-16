@@ -7,15 +7,12 @@ edition = "2024"
 
 [dependencies]
 human-panic = "2.0"
+jiff = "1.0"
 notify = "8.0"
 pulldown-cmark = "0.13"
 regex = "1.0"
 relm4 = "0.11"
 smol = "2.0"
-
-[dependencies.chrono]
-version = "0.4"
-default-features = false
 
 [dependencies.envir]
 version = "1.2"
@@ -32,7 +29,7 @@ version = "0.4"
 features = ["std"]
 
 [dependencies.todo-txt]
-version = "4.1"
+version = "5.0"
 features = ["config", "extended"]
 
 [build-dependencies]

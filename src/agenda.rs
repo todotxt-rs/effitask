@@ -1,10 +1,10 @@
-use chrono::Datelike as _;
 use gtk::prelude::*;
+use jiff::ToSpan as _;
 
 #[derive(Debug)]
 pub enum Msg {
     CalendarChange(Change),
-    DateSelect(chrono::NaiveDate),
+    DateSelect(jiff::civil::Date),
     Update,
 }
 
@@ -44,7 +44,7 @@ macro_rules! update {
 }
 
 pub struct Model {
-    date: chrono::NaiveDate,
+    date: jiff::civil::Date,
     month: relm4::Controller<crate::widgets::tasks::Model>,
     past: relm4::Controller<crate::widgets::tasks::Model>,
     today: relm4::Controller<crate::widgets::tasks::Model>,
@@ -74,7 +74,7 @@ impl Model {
     fn past_tasks(
         &self,
         list: &crate::tasks::List,
-        date: chrono::naive::NaiveDate,
+        date: jiff::civil::Date,
     ) -> Vec<crate::tasks::Task> {
         self.tasks(list, None, Some(date))
     }
@@ -82,52 +82,40 @@ impl Model {
     fn today_tasks(
         &self,
         list: &crate::tasks::List,
-        date: chrono::naive::NaiveDate,
+        date: jiff::civil::Date,
     ) -> Vec<crate::tasks::Task> {
-        self.tasks(list, Some(date), Some(date + chrono::Duration::days(1)))
+        self.tasks(list, Some(date), Some(date + 1.days()))
     }
 
     fn tomorrow_tasks(
         &self,
         list: &crate::tasks::List,
-        date: chrono::naive::NaiveDate,
+        date: jiff::civil::Date,
     ) -> Vec<crate::tasks::Task> {
-        self.tasks(
-            list,
-            Some(date + chrono::Duration::days(1)),
-            Some(date + chrono::Duration::days(2)),
-        )
+        self.tasks(list, Some(date + 1.days()), Some(date + 2.days()))
     }
 
     fn week_tasks(
         &self,
         list: &crate::tasks::List,
-        date: chrono::naive::NaiveDate,
+        date: jiff::civil::Date,
     ) -> Vec<crate::tasks::Task> {
-        self.tasks(
-            list,
-            Some(date + chrono::Duration::days(2)),
-            Some(date + chrono::Duration::weeks(1)),
-        )
+        self.tasks(list, Some(date + 2.days()), Some(date + 1.weeks()))
     }
 
     fn month_tasks(
         &self,
         list: &crate::tasks::List,
-        date: chrono::naive::NaiveDate,
+        date: jiff::civil::Date,
     ) -> Vec<crate::tasks::Task> {
-        self.tasks(
-            list,
-            Some(date + chrono::Duration::weeks(1)),
-            Some(date + chrono::Duration::weeks(4)),
-        )
+        self.tasks(list, Some(date + 1.weeks()), Some(date + 4.weeks()))
     }
 
     fn tasks(
         &self,
         list: &crate::tasks::List,
-        start: Option<chrono::naive::NaiveDate>,
-        end: Option<chrono::naive::NaiveDate>,
+        start: Option<jiff::civil::Date>,
+        end: Option<jiff::civil::Date>,
     ) -> Vec<crate::tasks::Task> {
         let preferences = crate::application::preferences();
 
@@ -152,14 +140,12 @@ impl Model {
     }
 
     fn update_marks(&self, widgets: &ModelWidgets) {
-        use chrono::Datelike as _;
-
         widgets.calendar.clear_marks();
 
         let list = crate::application::tasks();
         let date = widgets.calendar.date();
-        let month = date.month() as u32;
-        let year = date.year();
+        let month = date.month() as i8;
+        let year = date.year() as i16;
 
         for task in &list.tasks {
             let Some(due_date) = task.due_date else {
@@ -167,7 +153,7 @@ impl Model {
             };
 
             if due_date.year() == year && due_date.month() == month {
-                widgets.calendar.mark_day(due_date.day());
+                widgets.calendar.mark_day(due_date.day() as u32);
             }
         }
     }
@@ -176,7 +162,7 @@ impl Model {
 #[relm4::component(pub)]
 impl relm4::Component for Model {
     type CommandOutput = ();
-    type Init = chrono::NaiveDate;
+    type Init = jiff::civil::Date;
     type Input = Msg;
     type Output = crate::widgets::task::MsgOutput;
 
@@ -214,19 +200,18 @@ impl relm4::Component for Model {
         match msg {
             CalendarChange(change) => {
                 self.date = match change {
-                    Change::NextMonth => self.date.checked_add_months(chrono::Months::new(1)),
-                    Change::NextYear => self.date.checked_add_months(chrono::Months::new(12)),
-                    Change::PrevMonth => self.date.checked_sub_months(chrono::Months::new(1)),
-                    Change::PrevYear => self.date.checked_sub_months(chrono::Months::new(12)),
-                }
-                .unwrap();
+                    Change::NextMonth => self.date + 1.months(),
+                    Change::NextYear => self.date + 1.years(),
+                    Change::PrevMonth => self.date - 1.months(),
+                    Change::PrevYear => self.date - 1.years(),
+                };
 
                 self.update_marks(widgets);
             }
             DateSelect(date) => {
                 widgets.calendar.set_day(date.day() as i32);
-                widgets.calendar.set_month(date.month0() as i32);
-                widgets.calendar.set_year(date.year());
+                widgets.calendar.set_month(date.month() as i32 - 1);
+                widgets.calendar.set_year(date.year() as i32);
                 self.date = date;
             }
             Update => (),
@@ -259,7 +244,7 @@ impl relm4::Component for Model {
                 },
                 gtk::Button {
                     set_label: "Today",
-                    connect_clicked => Msg::DateSelect(crate::date::today()),
+                    connect_clicked => Msg::DateSelect(todo_txt::date::today()),
                 },
             },
             gtk::ScrolledWindow {

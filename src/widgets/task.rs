@@ -17,17 +17,17 @@ pub struct Model {
 }
 
 impl Model {
-    fn date_alias(&self, date: chrono::NaiveDate) -> String {
-        let today = crate::date::today();
+    fn date_alias(&self, date: jiff::civil::Date) -> String {
+        let today = todo_txt::date::today();
 
         if date == today {
             String::from("today")
-        } else if Some(date) == today.pred_opt() {
+        } else if Some(date) == today.yesterday().ok() {
             String::from("yesterday")
-        } else if Some(date) == today.succ_opt() {
+        } else if Some(date) == today.tomorrow().ok() {
             String::from("tomorrow")
         } else {
-            date.format("%Y-%m-%d").to_string()
+            date.strftime("%Y-%m-%d").to_string()
         }
     }
 }
@@ -56,7 +56,7 @@ impl relm4::SimpleComponent for Model {
         let widgets = view_output!();
 
         if let Some(due) = model.task.due_date {
-            let today = crate::date::today();
+            let today = todo_txt::date::today();
 
             if due < today {
                 widgets.due_label.add_css_class("past");

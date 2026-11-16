@@ -16,7 +16,7 @@ impl Model {
         if !task.finished
             && let Some(due_date) = task.due_date
         {
-            let today = crate::date::today();
+            let today = todo_txt::date::today();
 
             if due_date < today {
                 context.set_source_rgb(1., 0.4, 0.5);

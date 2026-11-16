@@ -1,6 +1,6 @@
 macro_rules! tags {
     ($self:ident, $kind:ident) => {{
-        let today = crate::date::today();
+        let today = todo_txt::date::today();
         let preferences = crate::application::preferences();
 
         $self
@@ -148,7 +148,7 @@ impl List {
         let mut task = crate::tasks::Task::from_str(text)
             .map_err(|_| format!("Unable to convert task: '{text}'"))?;
 
-        task.create_date = Some(crate::date::today());
+        task.create_date = Some(todo_txt::date::today());
 
         self.append(task);
         self.write()

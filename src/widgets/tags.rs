@@ -68,7 +68,7 @@ impl Model {
     }
 
     fn update_tasks(&self, filters: &[String]) {
-        let today = crate::date::today();
+        let today = todo_txt::date::today();
         let preferences = crate::application::preferences();
         let list = crate::application::tasks();
 
