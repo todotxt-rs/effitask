@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 human-panic = "2.0"
 jiff = "1.0"
-notify = "8.0"
+notify = "9.0"
 pulldown-cmark = "0.13"
 regex = "1.0"
 relm4 = "0.11"
